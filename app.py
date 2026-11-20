@@ -1541,11 +1541,12 @@ st.divider()
 # 8. 4-TAB CLINICAL WORKFLOW, RESPONSIBLE AI EDGE CASES & SCALABILITY
 # =============================================================================
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "1. 📊 Reversible Trajectory & Digital Twin Simulator",
     "2. 🛡️ Responsible AI: 'When the AI Is Wrong' & Clinician Gate",
     "3. 📱 Edge Device Vault & Tier 1–3 Escalation",
     "4. 🚀 Scalability, Single-Partner Pilot & Audit Log",
+    "5. 📋 Post-Diagnostic Care Plan & Compliance",
 ])
 
 
@@ -2111,3 +2112,138 @@ with tab4:
         "Logs every live intake, 1-tap booking confirmation, consent toggle, PII anonymization change, and device kill-switch event."
     )
     st.dataframe(pd.DataFrame(st.session_state.audit_log), use_container_width=True)
+with tab5:
+    st.subheader(f"📋 Post-Diagnostic Care Plan & Compliance Monitor — {clean_display_name}")
+    st.caption("Closed-loop patient adherence tracking, clinical impact projection, bilingual encouragement, and provider escalation.")
+
+    if "compliance_logs" not in st.session_state:
+        st.session_state.compliance_logs = {}
+    if "provider_alerts" not in st.session_state:
+        st.session_state.provider_alerts = []
+
+    pid_key = str(selected_pid)
+    patient_phone = _clean_str(patient.get("contact_phone"))
+    baseline_risk = float(patient.get("risk_score", 78.0))
+
+    # 1. Active Post-Diagnostic Care Protocol
+    with st.container(border=True):
+        st.markdown("#### 1️⃣ Active Post-Diagnostic Care Protocol")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("**💊 Medication & PGx Protocol**")
+            st.write("- Therapy adjusted per pharmacogenomic profile (e.g., SLCO1B1).")
+            st.write("- Daily AM/PM dose logging via Sahatna / WhatsApp.")
+        with c2:
+            st.markdown("**🥗 Nutrition & Lifestyle Targets**")
+            st.write("- Low-glycemic meal plan (<130g carbs/day).")
+            st.write("- 30 mins brisk walking, 5x/week.")
+        with c3:
+            st.markdown("**🔬 Follow-Up Diagnostics**")
+            st.write("- HbA1c & Lipid Panel re-check in 30 days.")
+            st.write("- Weekly home BP & fasting glucose sync.")
+
+    # 2. Live Patient Compliance & Health Impact Monitor
+    st.markdown("#### 2️⃣ Live Patient Compliance & Health Impact Monitor")
+    col_left, col_right = st.columns([1.1, 1])
+
+    with col_left:
+        with st.container(border=True):
+            st.markdown("**Patient Self-Report & Connected Device Sync**")
+            med_adherence = st.slider(
+                "Medication Adherence (Last 7 Days %)",
+                min_value=0, max_value=100, value=85, step=5,
+                key=f"med_adh_{pid_key}"
+            )
+            lifestyle_adherence = st.slider(
+                "Diet & Activity Goal Completion (%)",
+                min_value=0, max_value=100, value=75, step=5,
+                key=f"life_adh_{pid_key}"
+            )
+            danger_flag = st.checkbox(
+                "⚠️ Danger Vitals / Red-Flag Symptoms Detected (BP > 160/100, Glucose > 240 mg/dL, Chest Pain)",
+                value=False,
+                key=f"danger_{pid_key}"
+            )
+
+            overall_compliance = round((med_adherence * 0.65) + (lifestyle_adherence * 0.35), 1)
+            projected_risk = round(max(12.0, baseline_risk * (1 - (overall_compliance / 100) * 0.42)), 1)
+            risk_delta = round(projected_risk - baseline_risk, 1)
+
+    with col_right:
+        with st.container(border=True):
+            st.markdown("**📊 Projected Clinical Impact**")
+            m1, m2 = st.columns(2)
+            m1.metric("Overall Compliance Score", f"{overall_compliance}%", delta="Target: ≥ 80%")
+            m2.metric(
+                "Projected 30-Day Risk Score",
+                f"{projected_risk}%",
+                delta=f"{risk_delta}% vs baseline",
+                delta_color="inverse"
+            )
+            st.progress(int(overall_compliance))
+
+            if overall_compliance >= 80 and not danger_flag:
+                st.success("✅ **Positive Trajectory:** High adherence is actively reducing complication risk.")
+            elif overall_compliance >= 50 and not danger_flag:
+                st.warning("⚠️ **Moderate Drift:** Partial adherence slows risk reduction. Encouragement nudge recommended.")
+            else:
+                st.error("🚨 **Critical Non-Compliance / Danger Risk:** Immediate health provider intervention required.")
+
+    # 3. Automated Closed-Loop Intervention
+    st.markdown("#### 3️⃣ Automated Closed-Loop Intervention")
+    act_col1, act_col2 = st.columns(2)
+
+    with act_col1:
+        with st.container(border=True):
+            st.markdown("**🌟 Patient Encouragement & Impact Nudge (EN / AR)**")
+            enc_msg = (
+                f"Hayat360 Care Update for {clean_display_name}: Your {overall_compliance}% care plan compliance "
+                f"is projected to lower your health risk by {abs(risk_delta)}%! Keep going — your next milestone is within reach. | "
+                f"تحديث رعاية حياة 360: التزامك بنسبة {overall_compliance}% يقلل من المخاطر الصحية بنسبة {abs(risk_delta)}%. استمر في التقدم!"
+            )
+            st.text_area("Encouragement Message Preview", value=enc_msg, height=95, disabled=True, key=f"enc_prev_{pid_key}")
+            if st.button("💚 Send Encouragement to Patient", key=f"send_enc_{pid_key}", use_container_width=True):
+                st.session_state.compliance_logs[pid_key] = {
+                    "patient": clean_display_name,
+                    "compliance": overall_compliance,
+                    "action": "Encouragement Sent",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                }
+                st.success(f"Encouragement & progress impact sent to {clean_display_name} via {reminder_channel}!")
+
+    with act_col2:
+        with st.container(border=True):
+            st.markdown("**🚨 Health Provider Escalation Alert**")
+            is_critical = (overall_compliance < 60) or danger_flag
+            alert_reason = (
+                "DANGER VITALS / RED-FLAG SYMPTOMS" if danger_flag
+                else f"LOW COMPLIANCE ({overall_compliance}% < 60% threshold)"
+            )
+            alert_summary = (
+                f"CLINICAL ALERT [{alert_reason}] — Patient: {clean_display_name} (ID: {pid_key}, Phone: {patient_phone}). "
+                f"Med Adherence: {med_adherence}%, Lifestyle: {lifestyle_adherence}%. Immediate tele-consult / nurse outreach advised."
+            )
+            st.text_area("Provider Alert Payload", value=alert_summary, height=95, disabled=True, key=f"alert_prev_{pid_key}")
+
+            if st.button(
+                "🚨 Escalate Alert to Health Provider" if is_critical else "📋 Log Routine Provider Status",
+                key=f"send_alert_{pid_key}",
+                type="primary" if is_critical else "secondary",
+                use_container_width=True
+            ):
+                st.session_state.provider_alerts.append({
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "patient_id": pid_key,
+                    "patient_name": clean_display_name,
+                    "compliance": f"{overall_compliance}%",
+                    "severity": "CRITICAL" if is_critical else "ROUTINE",
+                    "reason": alert_reason
+                })
+                if is_critical:
+                    st.error(f"🚨 Urgent clinical alert dispatched to on-call care team for {clean_display_name}!")
+                else:
+                    st.info(f"Routine compliance summary logged for {clean_display_name}'s care team.")
+
+    if st.session_state.provider_alerts:
+        st.markdown("#### 🏥 Active Health Provider Alert Queue")
+        st.dataframe(pd.DataFrame(st.session_state.provider_alerts), use_container_width=True)
