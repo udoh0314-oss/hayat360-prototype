@@ -2113,137 +2113,301 @@ with tab4:
     )
     st.dataframe(pd.DataFrame(st.session_state.audit_log), use_container_width=True)
 with tab5:
-    st.subheader(f"📋 Post-Diagnostic Care Plan & Compliance Monitor — {clean_display_name}")
-    st.caption("Closed-loop patient adherence tracking, clinical impact projection, bilingual encouragement, and provider escalation.")
+    st.subheader(f"📋 Post-Diagnostic Care Plan, Precision Meal Planner & Automated Monitor — {clean_display_name}")
+    st.caption("Portion-calibrated meal planner (exact quantities & nutritional qualities) linked to automated patient encouragement and provider escalation.")
 
     if "compliance_logs" not in st.session_state:
         st.session_state.compliance_logs = {}
     if "provider_alerts" not in st.session_state:
         st.session_state.provider_alerts = []
+    if "auto_last_state" not in st.session_state:
+        st.session_state.auto_last_state = {}
 
     pid_key = str(selected_pid)
     patient_phone = _clean_str(patient.get("contact_phone"))
     baseline_risk = float(patient.get("risk_score", 78.0))
 
-    # 1. Active Post-Diagnostic Care Protocol
+    # --- 1. PRECISION MEAL PLANNER (QUANTITIES + NUTRITIONAL QUALITIES) ---
     with st.container(border=True):
-        st.markdown("#### 1️⃣ Active Post-Diagnostic Care Protocol")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("**💊 Medication & PGx Protocol**")
-            st.write("- Therapy adjusted per pharmacogenomic profile (e.g., SLCO1B1).")
-            st.write("- Daily AM/PM dose logging via Sahatna / WhatsApp.")
-        with c2:
-            st.markdown("**🥗 Nutrition & Lifestyle Targets**")
-            st.write("- Low-glycemic meal plan (<130g carbs/day).")
-            st.write("- 30 mins brisk walking, 5x/week.")
-        with c3:
-            st.markdown("**🔬 Follow-Up Diagnostics**")
-            st.write("- HbA1c & Lipid Panel re-check in 30 days.")
-            st.write("- Weekly home BP & fasting glucose sync.")
+        st.markdown("#### 1️⃣ Precision Meal Planner (Exact Quantities & Nutritional Qualities)")
+        diet_focus = st.selectbox(
+            "Select Prescribed Clinical Nutrition Protocol",
+            [
+                "Glycemic & Cardiometabolic Control (1,850 kcal | Low-GI <55 | High-Fiber)",
+                "Shift-Worker Sustained Energy & Hydration (2,000 kcal | Slow-Release | Electrolyte-Balanced)",
+                "DASH Hypertension & Lipid Control (1,750 kcal | <1,500mg Sodium | Omega-3 Rich)"
+            ],
+            key=f"diet_track_{pid_key}"
+        )
 
-    # 2. Live Patient Compliance & Health Impact Monitor
-    st.markdown("#### 2️⃣ Live Patient Compliance & Health Impact Monitor")
+        meal_plans = {
+            "Glycemic & Cardiometabolic Control (1,850 kcal | Low-GI <55 | High-Fiber)": [
+                {
+                    "Meal & Timing": "Breakfast (07:30)",
+                    "Food & Exact Quantities": "2 whole boiled eggs (100g) + 2 tbsp low-fat labneh (30g) + 1 small whole-grain khubz (45g) + 100g sliced cucumber & tomato + 200mL unsweetened green tea",
+                    "Nutritional Quality": "390 kcal • 22g Protein • 32g Low-GI Carbs • 7g Fiber • GI: 42 (Prevents morning glucose spike)"
+                },
+                {
+                    "Meal & Timing": "Lunch (13:30)",
+                    "Food & Exact Quantities": "150g grilled hammour or skinless chicken breast + ½ cup cooked brown basmati rice (95g) + 2 cups fattoush salad (150g) with 1 tbsp extra-virgin olive oil (15mL) & lemon",
+                    "Nutritional Quality": "560 kcal • 44g Lean Protein • 42g Complex Carbs • 9g Fiber • Rich in MUFA & Omega-3"
+                },
+                {
+                    "Meal & Timing": "Afternoon Snack (17:00)",
+                    "Food & Exact Quantities": "15 raw almonds (20g) + 150g plain low-fat Greek yogurt + ½ tsp Ceylon cinnamon",
+                    "Nutritional Quality": "240 kcal • 16g Protein • 10g Carbs • 4g Fiber • High satiety, improves insulin sensitivity"
+                },
+                {
+                    "Meal & Timing": "Dinner (20:00)",
+                    "Food & Exact Quantities": "1 bowl red lentil soup / shorbat adas (250mL) + 150g steamed/grilled zucchini & broccoli + 2 tbsp hummus (30g)",
+                    "Nutritional Quality": "410 kcal • 21g Plant Protein • 44g Slow Carbs • 12g Soluble Fiber • Light evening glycemic load"
+                },
+                {
+                    "Meal & Timing": "Hydration & Meds",
+                    "Food & Exact Quantities": "2,500mL plain water (500mL before each meal) + Prescribed Statin/Metformin with dinner",
+                    "Nutritional Quality": "0 kcal • 0g Sugar • Optimizes renal clearance & GI medication tolerance"
+                }
+            ],
+            "Shift-Worker Sustained Energy & Hydration (2,000 kcal | Slow-Release | Electrolyte-Balanced)": [
+                {
+                    "Meal & Timing": "Pre-Shift Meal (18:30)",
+                    "Food & Exact Quantities": "½ cup rolled oats (45g) cooked in 200mL low-fat milk + 1 tbsp chia seeds (12g) + 4 walnut halves (15g) + 1 boiled egg (50g)",
+                    "Nutritional Quality": "480 kcal • 23g Protein • 46g Low-GI Carbs • 11g Fiber • 5-hour steady glucose release"
+                },
+                {
+                    "Meal & Timing": "Mid-Shift Fuel (00:30)",
+                    "Food & Exact Quantities": "160g grilled chicken breast strips + 150g mixed leafy greens & bell peppers + 2 tbsp tahini-lemon dressing (30g) + ½ whole-wheat pita (35g)",
+                    "Nutritional Quality": "540 kcal • 46g Protein • 34g Complex Carbs • 8g Fiber • Zero trans-fat, prevents mid-shift crash"
+                },
+                {
+                    "Meal & Timing": "Shift Hydration Snack (04:00)",
+                    "Food & Exact Quantities": "30g roasted unsalted chickpeas + 1 small green apple (120g) + 600mL water with sugar-free electrolytes",
+                    "Nutritional Quality": "230 kcal • 8g Protein • 35g Carbs • 7g Fiber • High potassium & magnesium for heat/shift fatigue"
+                },
+                {
+                    "Meal & Timing": "Post-Shift Recovery (07:30)",
+                    "Food & Exact Quantities": "2-egg vegetable omelet (100g egg + 80g spinach/mushrooms) + 40g grilled low-salt halloumi + 100g cherry tomatoes",
+                    "Nutritional Quality": "380 kcal • 27g Protein • 11g Carbs • 4g Fiber • Low-carb recovery for restful daytime sleep"
+                },
+                {
+                    "Meal & Timing": "Hydration & Meds",
+                    "Food & Exact Quantities": "3,000mL water across shift (250mL/hour) + Shift-aligned dose schedule",
+                    "Nutritional Quality": "0 kcal • Prevents dehydration-induced hemoconcentration & BP spikes"
+                }
+            ],
+            "DASH Hypertension & Lipid Control (1,750 kcal | <1,500mg Sodium | Omega-3 Rich)": [
+                {
+                    "Meal & Timing": "Breakfast (07:30)",
+                    "Food & Exact Quantities": "180g unsweetened Greek yogurt + 75g fresh blueberries + 1 tbsp ground flaxseed (10g) + 1 slice unsalted sprouted toast (35g)",
+                    "Nutritional Quality": "360 kcal • 22g Protein • 38g Carbs • 8g Fiber • <140mg Sodium • High-potassium vascular support"
+                },
+                {
+                    "Meal & Timing": "Lunch (13:30)",
+                    "Food & Exact Quantities": "150g baked salmon (herb-crusted, no salt) + ½ cup cooked quinoa (90g) + 150g steamed asparagus & broccoli + 1 tsp olive oil (5mL)",
+                    "Nutritional Quality": "530 kcal • 39g Protein • 36g Carbs • 7g Fiber • 1,800mg Omega-3 EPA/DHA • <180mg Sodium"
+                },
+                {
+                    "Meal & Timing": "Afternoon Snack (17:00)",
+                    "Food & Exact Quantities": "1 medium banana (115g) + 20g unsalted raw pistachios",
+                    "Nutritional Quality": "220 kcal • 6g Protein • 31g Carbs • 4g Fiber • 520mg Potassium (natural BP regulation)"
+                },
+                {
+                    "Meal & Timing": "Dinner (20:00)",
+                    "Food & Exact Quantities": "120g grilled turkey or chicken breast + 200g roasted eggplant, zucchini & garlic-herb ratatouille (no added salt)",
+                    "Nutritional Quality": "370 kcal • 34g Lean Protein • 22g Carbs • 8g Fiber • <160mg Sodium • Rich in polyphenols"
+                },
+                {
+                    "Meal & Timing": "Hydration & Meds",
+                    "Food & Exact Quantities": "2,500mL low-sodium water + Morning antihypertensive dose & evening home BP check",
+                    "Nutritional Quality": "<20mg Sodium/L • Supports endothelial function & nocturnal BP dipping"
+                }
+            ]
+        }
+
+        st.dataframe(pd.DataFrame(meal_plans[diet_focus]), use_container_width=True, hide_index=True)
+
+    # --- 2. LIVE PATIENT COMPLIANCE & CLINICAL IMPACT MONITOR ---
+    st.markdown("#### 2️⃣ Live Compliance Telemetry & Health Impact")
+
+    sim_state = st.radio(
+        "📡 Simulate Incoming Patient Telemetry Stream:",
+        [
+            "🟢 Week 2: High Adherence & Improving (92%)",
+            "🟡 Week 3: Moderate Portion Drift (68%)",
+            "🔴 Week 4: Non-Compliant + BP Spike (42%)"
+        ],
+        horizontal=True,
+        key=f"sim_stream_{pid_key}"
+    )
+
+    if "Week 2" in sim_state:
+        default_med, default_meal, default_danger = 95, 90, False
+    elif "Week 3" in sim_state:
+        default_med, default_meal, default_danger = 70, 65, False
+    else:
+        default_med, default_meal, default_danger = 45, 40, True
+
     col_left, col_right = st.columns([1.1, 1])
 
     with col_left:
         with st.container(border=True):
-            st.markdown("**Patient Self-Report & Connected Device Sync**")
+            st.markdown("**Connected Wearable & Diet Log Telemetry**")
             med_adherence = st.slider(
-                "Medication Adherence (Last 7 Days %)",
-                min_value=0, max_value=100, value=85, step=5,
-                key=f"med_adh_{pid_key}"
+                "7-Day Medication Adherence (%)",
+                min_value=0, max_value=100, value=default_med, step=5,
+                key=f"med_adh_{pid_key}_{sim_state[:6]}"
             )
-            lifestyle_adherence = st.slider(
-                "Diet & Activity Goal Completion (%)",
-                min_value=0, max_value=100, value=75, step=5,
-                key=f"life_adh_{pid_key}"
+            meal_adherence = st.slider(
+                "7-Day Portion & Nutrient Quality Adherence (%)",
+                min_value=0, max_value=100, value=default_meal, step=5,
+                key=f"life_adh_{pid_key}_{sim_state[:6]}"
             )
             danger_flag = st.checkbox(
-                "⚠️ Danger Vitals / Red-Flag Symptoms Detected (BP > 160/100, Glucose > 240 mg/dL, Chest Pain)",
-                value=False,
-                key=f"danger_{pid_key}"
+                "⚠️ Danger Vitals / Red-Flag Symptoms (BP > 160/100, Fasting Glucose > 240 mg/dL, Chest Pain)",
+                value=default_danger,
+                key=f"danger_{pid_key}_{sim_state[:6]}"
             )
 
-            overall_compliance = round((med_adherence * 0.65) + (lifestyle_adherence * 0.35), 1)
+            overall_compliance = round((med_adherence * 0.55) + (meal_adherence * 0.45), 1)
             projected_risk = round(max(12.0, baseline_risk * (1 - (overall_compliance / 100) * 0.42)), 1)
             risk_delta = round(projected_risk - baseline_risk, 1)
 
     with col_right:
         with st.container(border=True):
-            st.markdown("**📊 Projected Clinical Impact**")
+            st.markdown("**📊 Real-Time Clinical Impact**")
             m1, m2 = st.columns(2)
-            m1.metric("Overall Compliance Score", f"{overall_compliance}%", delta="Target: ≥ 80%")
+            m1.metric("Combined Plan Compliance", f"{overall_compliance}%", delta="Target: ≥ 80%")
             m2.metric(
-                "Projected 30-Day Risk Score",
-                f"{projected_risk}%",
-                delta=f"{risk_delta}% vs baseline",
-                delta_color="inverse"
-            )
-            st.progress(int(overall_compliance))
+                "Projected 30-Day Risk",
+    f"{projected_risk}%",
+    delta=f"{risk_delta}% vs baseline",
+    delta_color="inverse",
+)
 
-            if overall_compliance >= 80 and not danger_flag:
-                st.success("✅ **Positive Trajectory:** High adherence is actively reducing complication risk.")
-            elif overall_compliance >= 50 and not danger_flag:
-                st.warning("⚠️ **Moderate Drift:** Partial adherence slows risk reduction. Encouragement nudge recommended.")
-            else:
-                st.error("🚨 **Critical Non-Compliance / Danger Risk:** Immediate health provider intervention required.")
+clamped_compliance = max(0, min(100, int(overall_compliance)))
+st.progress(clamped_compliance)
 
-    # 3. Automated Closed-Loop Intervention
-    st.markdown("#### 3️⃣ Automated Closed-Loop Intervention")
-    act_col1, act_col2 = st.columns(2)
+# --- 2. STATUS BANNER & TRIGGER CLASSIFICATION ---
+if danger_flag or clamped_compliance < 60:
+    current_trigger = "CRITICAL_ALERT"
+    st.error("🚨 DECLINING / DANGER STATE: Auto-escalating urgent alert to Health Provider.")
+elif clamped_compliance >= 80:
+    current_trigger = "ENCOURAGEMENT"
+    st.success("✅ IMPROVING / OPTIMAL STATE: Auto-dispatching bilingual encouragement to patient.")
+else:
+    current_trigger = "GENTLE_NUDGE"
+    st.warning("⚠️ MODERATE DRIFT (60–79%): Auto-sending portion & medication reminder nudge.")
 
-    with act_col1:
-        with st.container(border=True):
-            st.markdown("**🌟 Patient Encouragement & Impact Nudge (EN / AR)**")
-            enc_msg = (
-                f"Hayat360 Care Update for {clean_display_name}: Your {overall_compliance}% care plan compliance "
-                f"is projected to lower your health risk by {abs(risk_delta)}%! Keep going — your next milestone is within reach. | "
-                f"تحديث رعاية حياة 360: التزامك بنسبة {overall_compliance}% يقلل من المخاطر الصحية بنسبة {abs(risk_delta)}%. استمر في التقدم!"
-            )
-            st.text_area("Encouragement Message Preview", value=enc_msg, height=95, disabled=True, key=f"enc_prev_{pid_key}")
-            if st.button("💚 Send Encouragement to Patient", key=f"send_enc_{pid_key}", use_container_width=True):
-                st.session_state.compliance_logs[pid_key] = {
-                    "patient": clean_display_name,
-                    "compliance": overall_compliance,
-                    "action": "Encouragement Sent",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-                }
-                st.success(f"Encouragement & progress impact sent to {clean_display_name} via {reminder_channel}!")
+# --- 3. FULLY AUTOMATED ENCOURAGEMENT & PROVIDER ALERT ENGINE ---
+st.markdown("#### 3️⃣ Automated Closed-Loop Engine (Fires Immediately as Data Improves or Declines)")
 
-    with act_col2:
-        with st.container(border=True):
-            st.markdown("**🚨 Health Provider Escalation Alert**")
-            is_critical = (overall_compliance < 60) or danger_flag
-            alert_reason = (
-                "DANGER VITALS / RED-FLAG SYMPTOMS" if danger_flag
-                else f"LOW COMPLIANCE ({overall_compliance}% < 60% threshold)"
-            )
-            alert_summary = (
-                f"CLINICAL ALERT [{alert_reason}] — Patient: {clean_display_name} (ID: {pid_key}, Phone: {patient_phone}). "
-                f"Med Adherence: {med_adherence}%, Lifestyle: {lifestyle_adherence}%. Immediate tele-consult / nurse outreach advised."
-            )
-            st.text_area("Provider Alert Payload", value=alert_summary, height=95, disabled=True, key=f"alert_prev_{pid_key}")
+st.session_state.setdefault("auto_last_state", {})
+st.session_state.setdefault("provider_alerts", [])
+st.session_state.setdefault("compliance_logs", {})
 
-            if st.button(
-                "🚨 Escalate Alert to Health Provider" if is_critical else "📋 Log Routine Provider Status",
-                key=f"send_alert_{pid_key}",
-                type="primary" if is_critical else "secondary",
-                use_container_width=True
-            ):
-                st.session_state.provider_alerts.append({
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "patient_id": pid_key,
-                    "patient_name": clean_display_name,
-                    "compliance": f"{overall_compliance}%",
-                    "severity": "CRITICAL" if is_critical else "ROUTINE",
-                    "reason": alert_reason
-                })
-                if is_critical:
-                    st.error(f"🚨 Urgent clinical alert dispatched to on-call care team for {clean_display_name}!")
-                else:
-                    st.info(f"Routine compliance summary logged for {clean_display_name}'s care team.")
+plan_short = str(diet_focus).split("(")[0].strip()
+state_signature = f"{current_trigger}_{clamped_compliance}_{danger_flag}_{plan_short}"
+last_sig = st.session_state.auto_last_state.get(pid_key)
 
-    if st.session_state.provider_alerts:
-        st.markdown("#### 🏥 Active Health Provider Alert Queue")
-        st.dataframe(pd.DataFrame(st.session_state.provider_alerts), use_container_width=True)
+if state_signature != last_sig:
+    st.session_state.auto_last_state[pid_key] = state_signature
+    now_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    if current_trigger == "CRITICAL_ALERT":
+        reason_txt = (
+            "DANGER VITALS / RED-FLAG SYMPTOMS"
+            if danger_flag
+            else f"ADHERENCE DECLINED TO {clamped_compliance}% (<60%)"
+        )
+        st.session_state.provider_alerts.insert(0, {
+            "Timestamp": now_ts,
+            "Patient": f"{clean_display_name} ({pid_key})",
+            "Compliance": f"{clamped_compliance}%",
+            "Projected Risk": f"{projected_risk}%",
+            "Auto-Trigger": "🚨 PROVIDER ESCALATION",
+            "Reason": reason_txt,
+        })
+    else:
+        action_label = (
+            "🌟 Bilingual Encouragement Auto-Sent"
+            if current_trigger == "ENCOURAGEMENT"
+            else "💬 Portion & Med Nudge Auto-Sent"
+        )
+        st.session_state.compliance_logs[pid_key] = {
+            "Timestamp": now_ts,
+            "Patient": clean_display_name,
+            "Nutrition Track": plan_short,
+            "Compliance": f"{clamped_compliance}%",
+            "Risk Impact": f"{risk_delta}%",
+            "Auto-Action": action_label,
+        }
+
+try:
+    risk_reduction_abs = abs(float(risk_delta))
+except (ValueError, TypeError):
+    risk_reduction_abs = 0.0
+
+act_col1, act_col2 = st.columns(2)
+
+with act_col1:
+    with st.container(border=True):
+        st.markdown("🌟 Automated Patient Encouragement (EN / AR)")
+        if current_trigger in ("ENCOURAGEMENT", "GENTLE_NUDGE"):
+            st.success(f"⚡ AUTO-DISPATCHED via {reminder_channel} (Compliance: {clamped_compliance}%)")
+        else:
+            st.caption("Paused while patient is in Critical Alert state.")
+
+        enc_msg = (
+            f"Hayat360 Auto-Update for {clean_display_name}: Your {clamped_compliance}% adherence to your "
+            f"{plan_short} portions is projected to lower your 30-day risk by {risk_reduction_abs}%! Keep it up! | "
+            f"تحديث تلقائي من حياة 360: التزامك بنسبة {clamped_compliance}% بالحصص الغذائية والأدوية يقلل المخاطر الصحية بنسبة {risk_reduction_abs}%. استمر!"
+        )
+        st.text_area(
+            "Live Auto-Dispatched Patient Message",
+            value=enc_msg,
+            height=95,
+            disabled=True,
+            key=f"enc_prev_{pid_key}",
+        )
+
+with act_col2:
+    with st.container(border=True):
+        st.markdown("🚨 Automated Health Provider Escalation")
+        if current_trigger == "CRITICAL_ALERT":
+            st.error("⚡ AUTO-ESCALATED TO CARE TEAM — Immediate clinician outreach triggered!")
+        else:
+            st.info("✅ No danger threshold breached — provider queue clear for this patient.")
+
+        alert_reason = (
+            "DANGER VITALS / RED-FLAG SYMPTOMS"
+            if danger_flag
+            else f"ADHERENCE DECLINED ({clamped_compliance}% < 60% threshold)"
+        )
+        alert_summary = (
+            f"AUTO-ALERT [{alert_reason}] — {clean_display_name} (ID: {pid_key}, Phone: {patient_phone}). "
+            f"Meds: {med_adherence}%, Meal Portions: {meal_adherence}%, Projected Risk: {projected_risk}%."
+        )
+        st.text_area(
+            "Live Auto-Dispatched Provider Payload",
+            value=alert_summary,
+            height=95,
+            disabled=True,
+            key=f"alert_prev_{pid_key}",
+        )
+
+# --- 4. LIVE AUTOMATION FEEDS ---
+if st.session_state.provider_alerts:
+    st.markdown("#### 🏥 Live Auto-Triggered Health Provider Alert Feed")
+    st.dataframe(
+        pd.DataFrame(st.session_state.provider_alerts),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+if st.session_state.compliance_logs:
+    st.markdown("#### 💚 Live Auto-Sent Patient Encouragement Log")
+    st.dataframe(
+        pd.DataFrame(list(st.session_state.compliance_logs.values())),
+        use_container_width=True,
+        hide_index=True,
+    )
