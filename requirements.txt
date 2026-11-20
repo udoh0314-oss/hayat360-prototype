@@ -1,6 +1,12 @@
 streamlit
 pandas
 numpy
-xgboost
-shap
 plotly
+scikit-learn
+scipy
+shap
+altair
+pydeck
+pillow
+requests
+twilio
