@@ -10,3 +10,4 @@ pydeck
 pillow
 requests
 twilio
+xgboost
